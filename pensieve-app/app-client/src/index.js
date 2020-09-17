@@ -7,6 +7,10 @@ import { BrowserRouter } from 'react-router-dom';
 
 ReactDOM.render((
   <BrowserRouter>
+    <link
+      href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/katex.min.css"
+      rel="stylesheet"
+    />
     <App />
   </BrowserRouter>)
   , document.getElementById('root'));

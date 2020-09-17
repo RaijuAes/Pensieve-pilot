@@ -1,88 +1,157 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
 import { useTable, useRowSelect  } from 'react-table'
-
-import makeData from './makeData'
 import axios from 'axios';
-import Async from 'react-async';
 
 import MathJax from 'react-mathjax2'
-import { NavLink, Switch, Route } from 'react-router-dom';
+var Latex = require('react-latex');
 
-const ascii2 = 'U = 1/(R_(si) + sum_(i=1)^n(s_n/lambda_n) + R_(se))'
-const ascii = ' this equation is cool U = 1/(R_(si) + sum_(i=1)^n(s_n/lambda_n) + R_(se)) ya know'
+const LatexHelper = ({ values }) => {
+  return(
+    <>
+      <Latex>{values}</Latex>
+    </>
+  );
+};
 
+const columns = [
+  {
+    Header: 'ID',
+    accessor: 'QuestionId',
+  },
+  {
+    Header: 'Question',
+    accessor: 'Question',
+    Cell: ({ cell: { value } }) => <LatexHelper values={value} />
+  },
+  {
+    Header: 'Topic',
+    accessor: 'Topic',
+  },
+  {
+    Header: 'Sub-Topic',
+    accessor: 'Sub-Topic',
+  },
+  {
+    Header: 'Solution',
+    accessor: 'Solution',
+    Cell: ({ cell: { value } }) => <LatexHelper values={value} />
+  },
+  {
+    Header: 'Solution Type',
+    accessor: 'Solution Type',
+  },
+  {
+    Header: 'Difficulty',
+    accessor: 'Difficulty',
+  },
+  {
+    Header: 'Domain',
+    accessor: 'Domain',
+  }
+]
 
-const GeneratedPage = () => (
-  <nav>
-    <ul>
-      <li><NavLink to='/questions'>Questions</NavLink></li>
-      <li><NavLink to='/answers'>Answers</NavLink></li>
-    </ul>
-  </nav>
-);
+// function Answers(selectedAnswers) {
+//   return(
+//     selectedAnswers.map((ans) =>
+//       (
+//         <MathJax.Context input='ascii'>
+//           <li><MathJax.Node>{ans}</MathJax.Node>
+//           <br />
+//           <br />
+//           <br />
+//           <br />
+//           <br />
+//           <br />
+//           <br />
+//           <br />
+//           <br />
+//           </li>
+//         </MathJax.Context>
+//       )
+//     )
+//   );
+// }
 
-// const GenPageMain = () => (
-//   <Switch>
-//     <Route exact path='/questions' component={Questions}></Route>
-//     <Route exact path='/answers' component={Answers}></Route>
-//   </Switch>
-// );
-function GenPageMain (results){
-  return (
-    <Switch>
-      <Route
-        exact path='/questions'
-        render={(props) => <Questions {...props} selectedQuestions= {results[0]} />}
-      />
-      <Route
-        exact path='/answers'
-        render={(props) => <Answers {...props} selectedAnswers= {results[1]} />}
-      />
-    </Switch>
-  )
+function Answers(selectedAnswers) {
+  return(
+    selectedAnswers.map((ans) =>
+      (
+        <li><Latex>{ans}</Latex>
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        </li>
+      )
+    )
+  );
+}
+// function Questions2(selectedQuestions) {
+//   return(
+//     selectedQuestions.map((quest) =>
+//       (
+//         <MathJax.Context input='ascii'>
+//           <li><MathJax.Node>{quest}</MathJax.Node>
+//           <br />
+//           <br />
+//           <br />
+//           <br />
+//           <br />
+//           <br />
+//           <br />
+//           <br />
+//           <br />
+//           </li>
+//         </MathJax.Context>
+//       )
+//     )
+//   );
+// }
+
+function Questions(selectedQuestions) {
+  return(
+    selectedQuestions.map((quest) =>
+      (
+        <li><Latex>{quest}</Latex>
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        </li>
+      )
+    )
+  );
 }
 
-const Answers = ({selectedAnswers}) => (
-  <MathJax.Context input='ascii'>
-    <div>
-        <MathJax.Node>{selectedAnswers}</MathJax.Node>
-    </div>
-  </MathJax.Context>
-);
-
-const Questions = ({selectedQuestions}) => (
-  <MathJax.Context input='ascii'>
-    <div>
-        <MathJax.Node>{selectedQuestions}</MathJax.Node>
-    </div>
-  </MathJax.Context>
-);
-
 function texText(selectedFlatRows){
-  let questionText = ""
-  let answerText = ""
-  selectedFlatRows.map((d) => {
-    questionText = questionText + d.original.question
-    answerText = answerText + d.original.solution
-  })
+  let questionText = []
+  let answerText = []
+  for (let i = 0; i < selectedFlatRows.length; i++){
+    questionText.push(selectedFlatRows[i].Question)
+    answerText.push(selectedFlatRows[i].Solution)
+  }
+
   return [questionText, answerText]
-  // (<MathJax.Context input='ascii'>
-  //           <div>
-  //               <MathJax.Node>{text}</MathJax.Node>
-  //           </div>
-  //         </MathJax.Context>)
-  //let htmlStr =  renderToStaticMarkup("<MathJax.Context input='ascii'><div><MathJax.Node>{text}</MathJax.Node></div></MathJax.Context>")
-  //return htmlStr
 }
 
 function createDoc(jsonRows){
-  let rowCnt = 0
   let docStr = ""
-  for (let i = 0; i < jsonRows.length; i++){
-    docStr = docStr + String(jsonRows[i].original.question) + `\n`
+  if (jsonRows !== undefined){
+    for (let i = 0; i < jsonRows.length; i++){
+      docStr = docStr + String(jsonRows[i].Question) + `\n`
+    }
   }
-
   return docStr
 }
 
@@ -133,36 +202,55 @@ const IndeterminateCheckbox = React.forwardRef(
 );
 
 class ResultsTable extends Component {
-	constructor() {
-		super();
+	constructor(props) {
+		super(props);
 		this.state = {
-			data: [],
-			valuesPresent: false
+			data: null,
+			valuesPresent: false,
+      url: this.props.url
 		};
-		this.Table = this.Table.bind(this);
-		this.getTemp = this.getTemp.bind(this);
-		this.ResultsApp = this.ResultsApp.bind(this);
+
+    this.getQuestions = props.getQuestions
+    this.getAnswers = props.getAnswers
+		this.Table = this.Table.bind(this)
+		this.ResultsApp = this.ResultsApp.bind(this)
 	}
 
+  async componentDidMount(){
+    let results
+    try {
 
-  Table({ columns, data, hasResults, getDownload }) {
+      results = await axios.get(this.state.url)
+      this.setState({data: results.data.body})
+    } catch (error) {
+    console.error(error)
+    }
+  }
+
+  Table(columns, data) {
 	  // Use the state and functions returned from useTable to build your UI
-	  const {
-		getTableProps,
-		getTableBodyProps,
-		headerGroups,
-		rows,
-		prepareRow,
-		selectedFlatRows,
-		state: { selectedRowIds },
-	  } = useTable(
+    let selectedValues = {selectedRowIds: {}}//JSON.parse(sessionStorage.getItem("selectedIds"))
+    let selectedRows = JSON.parse(sessionStorage.getItem("selectedRows"))
+    if (selectedRows == null) {
+      selectedRows = []
+    }
+    for (let i = 0; i < selectedRows.length; i++){
+      for (let j = 0; j < data.length; j++){
+        if(selectedRows[i].Question == data[j].Question){
+          selectedValues.selectedRowIds[j] = true
+        }
+      }
+    }
+    const initialState = selectedValues
+    return(useTable(
 	    {
-		  columns,
-		  data,
+		      columns,
+		      data,
+          initialState
 	    },
 	    useRowSelect,
 	    hooks => {
-	      hooks.flatColumns.push(columns => [
+	      hooks.allColumns.push(columns => [
 	  	  // Let's make a column for selection
 	  	  {
   	  	    id: "selection",
@@ -183,164 +271,129 @@ class ResultsTable extends Component {
 		  },
 		  ...columns
 	      ]);
-	    }
-	  );
+	    },
+	  ))
 
-    let curLen = Object.keys(selectedFlatRows).length
-    React.useEffect(() => {
-      getDownload(curLen)
-    }, [curLen]);
-
-    //if (Object.keys(selectedFlatRows).length > 0){
-		  //this.setState({valuesPresent: true})
-	  //}
-
-	  // Render the UI for your table
-	  return (
-	    <>
-		  <table {...getTableProps()}>
-		    <thead>
-			  {headerGroups.map(headerGroup => (
-			    <tr {...headerGroup.getHeaderGroupProps()}>
-				  {headerGroup.headers.map(column => (
-				    <th {...column.getHeaderProps()}>{column.render('Header')}</th>
-				  ))}
-			    </tr>
-			  ))}
-		    </thead>
-		    <tbody {...getTableBodyProps()}>
-   			  {rows.map(
-			    (row, i) => {
-				  prepareRow(row);
-				  return (
-				    <tr {...row.getRowProps()}>
-					  {row.cells.map(cell => {
-					    return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-					  })}
-				    </tr>
-				  )}
-			  )}
-		    </tbody>
-		  </table>
-
-          <p>Selected Rows: {Object.keys(selectedRowIds).length}</p>
-          <pre>
-            <code>
-              {createDoc(selectedFlatRows)}
-            </code>
-          </pre>
-          <div>
-            {hasResults ? (
-              <div>
-              <button onClick="myFunction()">Try it</button>
-                <script>
-                function myFunction() {
-                  //window.open("").document.write(texText(selectedFlatRows))
-                }
-                </script>
-              <GeneratedPage />
-              {GenPageMain(texText(selectedFlatRows))}
-              <a href="data:application/octet-stream;charset=utf-8;base64,Zm9vIGJhcg==">text file</a>
-              </div>
-            ) : (
-              <a href="data:application/octet-stream;charset=utf-8;base64,Zm9vIGJhcg==">dont</a>
-            )}
-          </div>
-        </>
-      );
   }
 
-  // temporarily grab table information
-	async getTemp() {
-	  let results
-	  //const { name, message } = this.state;
-	  try {
-		  var urlJson = {
-						"TableName": "pensieve-test",
-						"FilterExpression": "(Difficulty = :difficulty)",
-						"ExpressionAttributeValues": {":difficulty": {"S": "Easy"}}
-						}
-		  var encoded = encodeURIComponent(JSON.stringify(urlJson))
-		  results = await axios.get('https://griowi9sk7.execute-api.us-east-2.amazonaws.com/v1/questions')
-		  var data = results.data
-		  this.setState({data: data})
-		  return data
-	  } catch (error) {
-		console.error(error)
-	  }
-	}
+	ResultsApp(data) {
+    // handle displaying of the tables and the various question answer pages
+    // existing selected row
+    let selectedRows = JSON.parse(sessionStorage.getItem("selectedRows"))
 
+    // new user
+    if (selectedRows == null) {
+      selectedRows = []
+    }
 
-	ResultsApp() {
-		let columns = React.useMemo(
-		() => [
-			{
-			  Header: 'ID',
-			  accessor: 'id',
-			},
-			{
-			  Header: 'Question',
-			  accessor: 'question',
-			},
-			{
-			  Header: 'Topic',
-			  accessor: 'topic',
-			},
-			{
-			  Header: 'Sub-Topic',
-			  accessor: 'subTopic',
-			},
-			{
-			  Header: 'Solution',
-			  accessor: 'solution',
-			},
-			{
-			  Header: 'Solution Type',
-			  accessor: 'solutionType',
-			},
-			{
-			  Header: 'Difficulty',
-			  accessor: 'difficulty',
-			},
-			{
-			  Header: 'Domain',
-			  accessor: 'domain',
-			}
-		],
-		[]
-		)
+    //no data
+    if (data.vals != null) {
+      let tempTable = this.Table(columns,
+                                 data.vals)
+      // currently selected rows
+      let updateSelectedRows = tempTable.selectedFlatRows.map(
+        d => d.original
+      )
 
-    const [resultStatus, hasResults] = React.useState(false)
-    const getDownload = React.useCallback((resultNum) => {
-      if (resultNum > 0) {
-        hasResults(true)
+      // these are the currently relevant search results
+      let notValidSelected = selectedRows
+        .filter(i => !data.vals.some(el => el.Question === i.Question))
+
+      // add the newly selected rows
+      let finalSelectedRows = notValidSelected.concat(updateSelectedRows)
+      //save the state for use later
+      sessionStorage.setItem("selectedRows",
+                           JSON.stringify(finalSelectedRows))
+      if ((!this.getAnswers && !this.getQuestions) == true) {
+  			return (
+  			  <Styles>
+            <>
+              <table {...tempTable.getTableProps()}>
+                <thead>
+            	  {tempTable.headerGroups.map(headerGroup => (
+            	    <tr {...headerGroup.getHeaderGroupProps()}>
+            		  {headerGroup.headers.map(column => (
+            		    <th {...column.getHeaderProps()}>{column.render('Header')}</th>
+            		  ))}
+            	    </tr>
+            	  ))}
+                </thead>
+                <tbody {...tempTable.getTableBodyProps()}>
+            			  {tempTable.rows.map(
+                	    (row, i) => {
+                		    tempTable.prepareRow(row);
+                  		  return (
+                  		    <tr {...row.getRowProps()}>
+                  			  {row.cells.map(cell => {
+                  			    return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                  			  })}
+                  		    </tr>
+                  		  )
+                      }
+                	  )}
+                </tbody>
+              </table>
+              <p>Selected Rows: {Object.keys(tempTable.state.selectedRowIds).length}</p>
+              <pre>
+                <code>
+                  {createDoc(selectedRows)}
+                </code>
+              </pre>
+            </>
+  			  </Styles>
+        )
       }
-      else {
-        hasResults(false)
-      }
-    }, [])
-
-	  return (
-		<Async promiseFn={this.getTemp}>
-			<Async.Fulfilled>
-			{data => {
-				return (
-				  <Styles>
-					<this.Table data={data}
-								columns={columns}
-                hasResults={resultStatus}
-                getDownload={getDownload}/>
-				  </Styles>
-			)}}
-			</Async.Fulfilled>
-		</Async>
-		)
-
+    }
+    if (this.getAnswers == true) {
+      let ansText = texText(selectedRows)[1]
+      return(
+        <div>
+          <ol>{Answers(ansText)}</ol>
+        </div>
+      );
+    }
+    if (this.getQuestions == true) {
+      let questText = texText(selectedRows)[0]
+      return(
+        <div>
+          <ol>{Questions(questText)}</ol>
+        </div>
+      );
+    }
+    return(
+      <div>
+        <h1>Getting your results</h1>
+      </div>
+    )
 	}
 
   render() {
-	  return <this.ResultsApp/>
+	  return <this.ResultsApp vals={this.state.data}/>
   }
 }
 
+ResultsTable.defaultProps = {
+  getQuestions: false,
+  getAnswers: false
+}
+
 export default ResultsTable
+
+
+// <div>
+//   {hasResults ? (
+//     <div>
+//     <button onClick="myFunction()">Try it</button>
+//       <script>
+//       function myFunction() {
+//         //window.open("").document.write(texText(selectedFlatRows))
+//       }
+//       </script>
+//     <GeneratedPage />
+//     {GenPageMain(texText(selectedFlatRows))}
+//     <a href="data:application/octet-stream;charset=utf-8;base64,Zm9vIGJhcg==">text file</a>
+//     </div>
+//   ) : (
+//     <a href="data:application/octet-stream;charset=utf-8;base64,Zm9vIGJhcg==">dont</a>
+//   )}
+// </div>
